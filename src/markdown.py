@@ -35,3 +35,73 @@ def extract_markdown_links(text):
     output_list = re.findall(r"(?<!!)\[([^\[\]]*)\]\(([^\(\)]*)\)", text)
 
     return output_list   
+
+def split_nodes_image(old_nodes):
+    new_nodes = []
+
+    for old_node in old_nodes:
+        if old_node.text_type != TextType.PLAIN:
+            new_nodes.append(old_node)
+            continue
+        
+        original_text = old_node.text
+        image_links = extract_markdown_images(original_text)
+        if len(image_links) == 0:
+            new_nodes.append(old_node)
+            continue
+
+        for (image_alt, image_link) in image_links:
+            sections = original_text.split(f"![{image_alt}]({image_link})", 1)
+            if len(sections) != 2:
+                raise ValueError("invalid markdown, image section not closed")
+            if sections[0] != "":
+                new_node = TextNode(sections[0], TextType.PLAIN)
+                new_nodes.append(new_node)
+                new_node = TextNode(image_alt, TextType.IMAGE, image_link)
+                new_nodes.append(new_node)
+            if sections[0] == "" and sections[1] == "":
+                new_node = TextNode(image_alt, TextType.IMAGE, image_link)
+                new_nodes.append(new_node)
+
+            original_text = sections[1]
+        
+        if original_text != "":
+            new_nodes.append(TextNode(original_text, TextType.PLAIN))
+
+    return new_nodes
+
+def split_nodes_link(old_nodes):
+    new_nodes = []
+
+    for old_node in old_nodes:
+        if old_node.text_type != TextType.PLAIN:
+            new_nodes.append(old_node)
+            continue
+        
+        original_text = old_node.text
+        links = extract_markdown_links(original_text)
+
+        if len (links) == 0:
+            new_nodes.append(old_node)
+            continue
+
+        for (link_text, link_url) in links:
+            sections = original_text.split(f"[{link_text}]({link_url})", 1)
+
+            if len(sections) != 2:
+                raise ValueError("invalid markdown, image section not closed")
+            if sections[0] != "":
+                new_node = TextNode(sections[0], TextType.PLAIN)
+                new_nodes.append(new_node)
+                new_node = TextNode(link_text, TextType.LINK, link_url)
+                new_nodes.append(new_node)
+            if sections[0] == "" and sections[1] == "":
+                new_node = TextNode(link_text, TextType.LINK, link_url)
+                new_nodes.append(new_node)
+
+            original_text = sections[1]
+        
+        if original_text != "":
+            new_nodes.append(TextNode(original_text, TextType.PLAIN))
+
+    return new_nodes
