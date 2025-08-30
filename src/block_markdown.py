@@ -12,6 +12,15 @@ class BlockType(Enum):
     ULIST = "unordered_list"
     OLIST = "ordered_list"
 
+def extract_title(markdown):
+    lines = markdown.split("\n")
+
+    for line in lines:
+        if line.startswith("#") and not line.startswith(("##","###","####","#####","######")):
+            return line[1:].strip()
+        
+    raise Exception("No H1 header found")
+
 def markdown_to_blocks(markdown):
     text_blocks = []
 
@@ -61,7 +70,6 @@ def markdown_to_html_node(markdown):
         html_node = block_to_html_node(text_block)
         children.append(html_node)
     return ParentNode("div", children, None)
-
 
 def block_to_html_node(text_block):
     block_type = block_to_block_type(text_block)
@@ -115,7 +123,6 @@ def code_to_html_node(text_block):
     code = ParentNode("code", [child])
     return ParentNode("pre", [code])
 
-
 def olist_to_html_node(text_block):
     items = text_block.split("\n")
     html_items = []
@@ -125,7 +132,6 @@ def olist_to_html_node(text_block):
         html_items.append(ParentNode("li", children))
     return ParentNode("ol", html_items)
 
-
 def ulist_to_html_node(text_block):
     items = text_block.split("\n")
     html_items = []
@@ -134,7 +140,6 @@ def ulist_to_html_node(text_block):
         children = text_to_children(text)
         html_items.append(ParentNode("li", children))
     return ParentNode("ul", html_items)
-
 
 def quote_to_html_node(text_block):
     lines = text_block.split("\n")
