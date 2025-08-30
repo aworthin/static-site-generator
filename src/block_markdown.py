@@ -19,7 +19,7 @@ def extract_title(markdown):
         if line.startswith("#") and not line.startswith(("##","###","####","#####","######")):
             return line[1:].strip()
         
-    raise Exception("No H1 header found")
+    raise ValueError("No title found")
 
 def markdown_to_blocks(markdown):
     text_blocks = []
