@@ -13,7 +13,7 @@ default_basepath = "/"
 def main():
     base_path = default_basepath
     if len(sys.argv) > 1:
-        basepath = sys.argv[1]
+        base_path = sys.argv[1]
 
     create_site(static_dir, public_dir, base_path)
 
