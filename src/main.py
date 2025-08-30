@@ -19,31 +19,46 @@ def create_site(static_dir, public_dir):
     print("Copying static files to public directory")
     copy_dir(static_dir, public_dir)
 
-    generate_page(os.path.join(content_dir,"index.md"), template_file, os.path.join(public_dir, "index.html"))
+    generate_pages_recursive(content_dir, template_file, public_dir)
 
-def generate_page(from_path, template_path, dest_path):
-    print(f"Generating page from {from_path} to {dest_path} using {template_path}")
-    if os.path.exists(from_path):
+def generate_pages_recursive(content_path, template_path, dest_path):
+    print(f"Generating content for directory {content_path}")
+    for file in os.listdir(content_path):
+        content_file = os.path.join(content_path, file)
+        dest_file = os.path.join(dest_path, file)
+
+        if os.path.isfile(content_file) and content_file.endswith(".md"):
+            dest_file = dest_file.replace(".md", ".html")
+            generate_page(content_file, template_path, dest_file)
+
+        if os.path.isdir(content_file):
+            generate_pages_recursive(content_file, template_path, dest_file)
+
+def generate_page(content_path, template_path, dest_path):
+    print(f"Generating page from {content_path} to {dest_path} using {template_path}")
+    if os.path.exists(content_path):
         try:
             from_file_contents = ""
-            with open(from_path, "r") as f:
+            with open(content_path, "r") as f:
                 from_file_contents = f.read()
+                f.close()
         except Exception as e:
-            return f'Error reading file "{from_path}": {e}'
+            return f'Error reading file "{content_path}": {e}'
         
     if  os.path.exists(template_path):
         try:
             template_file_contents = ""
             with open(template_path, "r") as f:
                 template_file_contents = f.read()
+                f.close()
         except Exception as e:
             return f'Error reading file "{template_path}": {e}'
     
     html_node = markdown_to_html_node(from_file_contents)
     html_output = html_node.to_html()
     title = extract_title(from_file_contents)
-    template_output = template_file_contents.replace("{{ Title }} ", title)
-    template_output = template_output.replace("{{ Content }}", html_output) 
+    template_file_contents = template_file_contents.replace("{{ Title }} ", title)
+    template_file_contents = template_file_contents.replace("{{ Content }}", html_output) 
 
     if not os.path.exists(os.path.dirname(dest_path)):
         try:
@@ -55,7 +70,7 @@ def generate_page(from_path, template_path, dest_path):
         return f'Error: "{dest_path}" is a directory, not a file'
     try:
         with open(dest_path, "w") as f:
-            f.write(template_output)
+            f.write(template_file_contents)
     except Exception as e:
         return f"Error: writing to file: {e}"
 
